@@ -4,12 +4,19 @@ package br.com.josef.desafioconcretegit.model.pojo.repositories;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 
-@SuppressWarnings("unused")
+@Entity(tableName = "item")
 public class Item implements Parcelable {
+
+    @PrimaryKey(autoGenerate = true)
+    private long key;
+
     @Override
     public String toString() {
         return "Item{" +
@@ -392,6 +399,14 @@ public class Item implements Parcelable {
 
     public String getAssigneesUrl() {
         return assigneesUrl;
+    }
+
+    public long getKey() {
+        return key;
+    }
+
+    public void setKey(long key) {
+        this.key = key;
     }
 
     public void setAssigneesUrl(String assigneesUrl) {

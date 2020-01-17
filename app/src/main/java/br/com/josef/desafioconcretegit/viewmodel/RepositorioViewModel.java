@@ -10,6 +10,8 @@ import androidx.lifecycle.MutableLiveData;
 
 import java.util.List;
 
+import br.com.josef.desafioconcretegit.model.data.CacheDao;
+import br.com.josef.desafioconcretegit.model.data.DatabaseGit;
 import br.com.josef.desafioconcretegit.model.data.repository.GitRepository;
 import br.com.josef.desafioconcretegit.model.pojo.pull.PullRequest;
 import br.com.josef.desafioconcretegit.model.pojo.repositories.GitResult;
@@ -18,6 +20,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
+
+import static br.com.josef.desafioconcretegit.util.AppUtil.isNetworkConnected;
 
 public class RepositorioViewModel extends AndroidViewModel {
 
@@ -43,31 +47,60 @@ public class RepositorioViewModel extends AndroidViewModel {
         return this.booleano;
     }
 
+    public void getRepositorioNetwork (int page){
+        if (isNetworkConnected(getApplication())){
+            getRepositorios(page);
+        }else{
+            getFromLocal();
+        }
+    }
 
 
     public void getRepositorios(int page) {
-
         disposable.add(
                 gitRepository.getRepositorios(page)
 
                         .subscribeOn(Schedulers.newThread())
+                        .map(this::saveItems)
                         .observeOn(AndroidSchedulers.mainThread())
                         .doOnSubscribe(disposable1 -> booleano.setValue(true))
                         .doOnTerminate(() -> booleano.setValue(false))
-                        .subscribe(new Consumer<GitResult>() {
-                            @Override
-                            public void accept(GitResult gitResult) throws Exception {
+                        .subscribe(result1 -> {
+                            listaDeRepositorios.setValue(result1.getItems());
+                        }, throwable -> {
 
-                                listaDeRepositorios.setValue(gitResult.getItems());
-                            }
-                        }, new Consumer<Throwable>() {
-                            @Override
-                            public void accept(Throwable throwable) throws Exception {
+                            Log.i("LOG", "Error: " + throwable.getMessage());
+                        })
 
-                                Log.i("LOG", "Error: " + throwable.getMessage());
-                            }
-                        }));
+
+        );
     }
+
+    private GitResult saveItems(GitResult gitResult) {
+        CacheDao dao = DatabaseGit
+                .getDatabase(getApplication()
+                        .getApplicationContext())
+                .cacheDao();
+        dao.deleteAll();
+        dao.insert(gitResult.getItems());
+        return gitResult;
+    }
+
+
+    private void getFromLocal() {
+        disposable.add(
+                gitRepository.getLocalResults(getApplication().getApplicationContext())
+                        .subscribeOn(Schedulers.newThread())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(results -> {
+                           listaDeRepositorios.setValue(results);
+                        }, throwable -> {
+                            Log.i("LOG", "erro buscando OffLine " + throwable.getMessage());
+                        })
+        );
+
+    }
+
 
     public void getPullRequest(String creatorString, String repoString) {
         disposable.add(
@@ -77,9 +110,9 @@ public class RepositorioViewModel extends AndroidViewModel {
                         .doOnSubscribe(disposable1 -> booleano.setValue(true))
                         .doOnTerminate(() -> booleano.setValue(false))
                         .subscribe(request1 -> {
-                                requestList.setValue(request1);
-                        }, throwable -> {
+                            requestList.setValue(request1);
 
+                        }, throwable -> {
                             Log.i("Log", "erro " + throwable.getMessage());
                         })
 

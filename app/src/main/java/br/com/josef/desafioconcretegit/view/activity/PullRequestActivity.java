@@ -29,10 +29,6 @@ import static br.com.josef.desafioconcretegit.view.activity.MainActivity.REPOSIT
 
 public class PullRequestActivity extends AppCompatActivity implements PullRequestOnclick {
 
-    private TextView titulo;
-    private TextView descricao;
-    private TextView username;
-    private TextView nomeSobrenome;
 
     private PullRequest pullRequest;
     private List<PullRequest> pullRequestList = new ArrayList<>();
@@ -80,10 +76,7 @@ public class PullRequestActivity extends AppCompatActivity implements PullReques
 
 
     public void initViews() {
-        titulo = findViewById(R.id.txtTituloPull);
-        descricao = findViewById(R.id.txtDescPull);
-        username = findViewById(R.id.txtUserPull);
-        nomeSobrenome = findViewById(R.id.txtNomeSobrenome);
+
         viewModel = ViewModelProviders.of(this).get(RepositorioViewModel.class);
         adapter = new PullRequestAdapter(pullRequestList, this);
         recyclerView = findViewById(R.id.RecyclerPullRequest);
